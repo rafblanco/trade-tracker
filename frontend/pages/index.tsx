@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from '@clerk/nextjs';
 import TradeForm from '../components/TradeForm';
 import TradeTable from '../components/TradeTable';
 import StrategyMetrics from '../components/StrategyMetrics';
@@ -8,21 +9,26 @@ import { fetchTrades, createTrade, updateTrade, deleteTrade } from '../lib/api';
 export default function Home() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [editing, setEditing] = useState<Trade | null>(null);
+  const { getToken } = useAuth();
 
   useEffect(() => {
     loadTrades();
   }, []);
 
   async function loadTrades() {
-    const data = await fetchTrades();
+    const token = await getToken();
+    if (!token) return;
+    const data = await fetchTrades(token);
     setTrades(data);
   }
 
   async function handleSave(trade: Trade) {
+    const token = await getToken();
+    if (!token) return;
     if (editing) {
-      await updateTrade({ ...trade, id: editing.id });
+      await updateTrade({ ...trade, id: editing.id }, token);
     } else {
-      await createTrade(trade);
+      await createTrade(trade, token);
     }
     setEditing(null);
     await loadTrades();
@@ -33,7 +39,9 @@ export default function Home() {
   }
 
   async function handleDelete(id: number) {
-    await deleteTrade(id);
+    const token = await getToken();
+    if (!token) return;
+    await deleteTrade(id, token);
     await loadTrades();
   }
 
@@ -42,13 +50,24 @@ export default function Home() {
   }
 
   return (
-    <div>
+    <>
       <h1>Trade Tracker</h1>
       <TradeForm initialTrade={editing} onSave={handleSave} onReset={handleReset} />
       <h2>Trades</h2>
       <TradeTable trades={trades} onEdit={handleEdit} onDelete={handleDelete} />
       <h2>Strategy Metrics</h2>
       <StrategyMetrics />
-    </div>
+      <SignedIn>
+        <div>
+          <h1>Trade Tracker</h1>
+          <TradeForm initialTrade={editing} onSave={handleSave} onReset={handleReset} />
+          <h2>Trades</h2>
+          <TradeTable trades={trades} onEdit={handleEdit} onDelete={handleDelete} />
+        </div>
+      </SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </>
   );
 }

@@ -6,7 +6,9 @@ from pathlib import Path
 import uvicorn
 import json
 
+from .auth import require_auth
 from backend.analytics.metrics import compute_trade_metrics
+
 
 ROOT = Path(__file__).resolve().parents[2]
 DB_PATH = ROOT / "trades.db"
@@ -73,7 +75,7 @@ class TradeUpdate(BaseModel):
 class Trade(TradeBase):
     id: int
 
-@app.get("/trades", response_model=List[Trade])
+@app.get("/trades", response_model=List[Trade], dependencies=[Depends(require_auth)])
 def list_trades(db: sqlite3.Connection = Depends(get_db)) -> List[Trade]:
     rows = db.execute("SELECT * FROM trades").fetchall()
     result = []
@@ -84,7 +86,12 @@ def list_trades(db: sqlite3.Connection = Depends(get_db)) -> List[Trade]:
         result.append(Trade(**data))
     return result
 
-@app.post("/trades", response_model=Trade, status_code=201)
+@app.post(
+    "/trades",
+    response_model=Trade,
+    status_code=201,
+    dependencies=[Depends(require_auth)],
+)
 def create_trade(trade: TradeCreate, db: sqlite3.Connection = Depends(get_db)) -> Trade:
     cursor = db.execute(
         """
@@ -110,8 +117,14 @@ def create_trade(trade: TradeCreate, db: sqlite3.Connection = Depends(get_db)) -
     data = trade.dict()
     return Trade(id=cursor.lastrowid, **data)
 
-@app.put("/trades/{trade_id}", response_model=Trade)
-def update_trade(trade_id: int, trade: TradeUpdate, db: sqlite3.Connection = Depends(get_db)) -> Trade:
+@app.put(
+    "/trades/{trade_id}",
+    response_model=Trade,
+    dependencies=[Depends(require_auth)],
+)
+def update_trade(
+    trade_id: int, trade: TradeUpdate, db: sqlite3.Connection = Depends(get_db)
+) -> Trade:
     existing = db.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
     if not existing:
         raise HTTPException(status_code=404, detail="Trade not found")
@@ -143,6 +156,7 @@ def update_trade(trade_id: int, trade: TradeUpdate, db: sqlite3.Connection = Dep
     if updated_data.get("legs"):
         updated_data["legs"] = json.loads(updated_data["legs"])
     return Trade(**updated_data)
+
 
 
 @app.get("/trades/{trade_id}/analytics")
