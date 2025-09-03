@@ -2,6 +2,18 @@
 
 Simple trade tracking service with a tiny Node.js backend and static dashboard.
 
+## Planned Tech Stack
+The project is evolving toward a modern stack that supports option strategy analytics and richer workflows:
+
+- **Frontend:** TypeScript + React (Next.js)
+- **Backend API:** Python (FastAPI)
+- **Authentication:** Clerk
+- **Database & File Storage:** Supabase (PostgreSQL and object storage)
+- **Background Tasks:** Celery with Redis
+- **Analytics:** NumPy, Pandas, and custom option‑pricing modules
+
+These components will enable tracking multi‑leg option strategies, computing performance metrics, and storing trade journals with screenshots.
+
 ## Database Schema
 The application uses a `trades` table with the following columns:
 
