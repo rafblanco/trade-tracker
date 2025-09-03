@@ -5,6 +5,8 @@ import sqlite3
 from pathlib import Path
 import uvicorn
 
+from .auth import require_auth
+
 ROOT = Path(__file__).resolve().parents[2]
 DB_PATH = ROOT / "trades.db"
 SCHEMA_PATH = ROOT / "schema.sql"
@@ -59,12 +61,17 @@ class TradeUpdate(BaseModel):
 class Trade(TradeBase):
     id: int
 
-@app.get("/trades", response_model=List[Trade])
+@app.get("/trades", response_model=List[Trade], dependencies=[Depends(require_auth)])
 def list_trades(db: sqlite3.Connection = Depends(get_db)) -> List[Trade]:
     rows = db.execute("SELECT * FROM trades").fetchall()
     return [Trade(**dict(row)) for row in rows]
 
-@app.post("/trades", response_model=Trade, status_code=201)
+@app.post(
+    "/trades",
+    response_model=Trade,
+    status_code=201,
+    dependencies=[Depends(require_auth)],
+)
 def create_trade(trade: TradeCreate, db: sqlite3.Connection = Depends(get_db)) -> Trade:
     cursor = db.execute(
         """
@@ -87,8 +94,14 @@ def create_trade(trade: TradeCreate, db: sqlite3.Connection = Depends(get_db)) -
     db.commit()
     return Trade(id=cursor.lastrowid, **trade.dict())
 
-@app.put("/trades/{trade_id}", response_model=Trade)
-def update_trade(trade_id: int, trade: TradeUpdate, db: sqlite3.Connection = Depends(get_db)) -> Trade:
+@app.put(
+    "/trades/{trade_id}",
+    response_model=Trade,
+    dependencies=[Depends(require_auth)],
+)
+def update_trade(
+    trade_id: int, trade: TradeUpdate, db: sqlite3.Connection = Depends(get_db)
+) -> Trade:
     existing = db.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
     if not existing:
         raise HTTPException(status_code=404, detail="Trade not found")
@@ -116,8 +129,14 @@ def update_trade(trade_id: int, trade: TradeUpdate, db: sqlite3.Connection = Dep
     updated = db.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
     return Trade(**dict(updated))
 
-@app.delete("/trades/{trade_id}", response_model=Trade)
-def delete_trade(trade_id: int, db: sqlite3.Connection = Depends(get_db)) -> Trade:
+@app.delete(
+    "/trades/{trade_id}",
+    response_model=Trade,
+    dependencies=[Depends(require_auth)],
+)
+def delete_trade(
+    trade_id: int, db: sqlite3.Connection = Depends(get_db)
+) -> Trade:
     existing = db.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
     if not existing:
         raise HTTPException(status_code=404, detail="Trade not found")

@@ -37,6 +37,26 @@ The application uses a `trades` table with the following columns:
 - `PUT /trades/:id` – update a trade
 - `DELETE /trades/:id` – remove a trade
 
+## Authentication
+The backend uses Clerk to validate requests. Every `/trades` endpoint requires
+an `Authorization: Bearer <token>` header containing a valid Clerk session
+token.
+
+### Environment variables
+The FastAPI service reads the following variables:
+
+| Variable | Description |
+|----------|-------------|
+| `CLERK_SECRET_KEY` | Backend API key used to verify session tokens |
+| `CLERK_PUBLISHABLE_KEY` | Frontend key used by the client to obtain tokens |
+
+Export them before running the server:
+
+```
+export CLERK_SECRET_KEY=sk_test_...
+export CLERK_PUBLISHABLE_KEY=pk_test_...
+```
+
 ## Development
 ### Backend (FastAPI)
 Install dependencies and start the API server:
