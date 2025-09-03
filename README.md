@@ -45,6 +45,21 @@ pip install fastapi uvicorn
 uvicorn backend.app.main:app --reload
 ```
 
+### Background Worker
+Install Celery and run the worker (requires a running Redis instance). The
+connection is configurable via the `CELERY_BROKER_URL` and
+`CELERY_RESULT_BACKEND` environment variables (defaults to
+`redis://localhost:6379/0`):
+```
+pip install celery redis
+celery -A backend.celery.celery_app worker --loglevel=info
+```
+
+Trigger analytics recalculation through the API:
+```
+curl -X POST http://localhost:8000/analytics/recalculate
+```
+
 ### Frontend
 ```
 npm install

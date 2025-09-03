@@ -3,6 +3,7 @@ from typing import List
 
 from .db import create_trade, get_trades, update_trade, delete_trade, init_db
 from .models import Trade
+from .celery import recalculate_trade_analytics
 
 app = FastAPI()
 
@@ -28,3 +29,9 @@ async def update_trade_route(trade_id: int, trade: Trade) -> None:
 @app.delete("/trades/{trade_id}")
 async def delete_trade_route(trade_id: int) -> None:
     await delete_trade(trade_id)
+
+
+@app.post("/analytics/recalculate")
+async def recalc_trade_analytics_route() -> dict:
+    task = recalculate_trade_analytics.delay()
+    return {"task_id": task.id}
