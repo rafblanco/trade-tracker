@@ -36,11 +36,16 @@ export default function TradeForm({ initialTrade, onSave, onReset }: TradeFormPr
 
   function handleChange(e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { id, value } = e.target;
-    const numericFields = ['qty', 'entry_price', 'exit_price', 'fees'];
-    setTrade(t => ({
-      ...t,
-      [id]: numericFields.includes(id) ? (value === '' ? null : Number(value)) : value,
-    }));
+
+    setTrade(t => {
+      if (id === 'qty' || id === 'entry_price') {
+        return { ...t, [id]: value === '' ? 0 : Number(value) };
+      }
+      if (id === 'exit_price' || id === 'fees') {
+        return { ...t, [id]: value === '' ? null : Number(value) };
+      }
+      return { ...t, [id]: value };
+    });
   }
 
   async function handleSubmit(e: FormEvent) {

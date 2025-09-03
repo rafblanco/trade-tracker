@@ -32,7 +32,7 @@ export default function TradeTable({ trades, onEdit, onDelete }: TradeTableProps
             <td>{t.notes ?? ''}</td>
             <td>
               <button onClick={() => onEdit(t)}>Edit</button>
-              <button onClick={() => t.id && onDelete(t.id)}>Delete</button>
+              <button onClick={() => onDelete(t.id)}>Delete</button>
             </td>
           </tr>
         ))}
