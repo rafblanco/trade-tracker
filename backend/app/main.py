@@ -6,6 +6,8 @@ from pathlib import Path
 import uvicorn
 
 from .auth import require_auth
+from backend.analytics.metrics import compute_trade_metrics
+
 
 ROOT = Path(__file__).resolve().parents[2]
 DB_PATH = ROOT / "trades.db"
@@ -129,14 +131,19 @@ def update_trade(
     updated = db.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
     return Trade(**dict(updated))
 
-@app.delete(
-    "/trades/{trade_id}",
-    response_model=Trade,
-    dependencies=[Depends(require_auth)],
-)
-def delete_trade(
-    trade_id: int, db: sqlite3.Connection = Depends(get_db)
-) -> Trade:
+
+
+@app.get("/trades/{trade_id}/analytics")
+def trade_analytics(trade_id: int, db: sqlite3.Connection = Depends(get_db)) -> dict:
+    """Return computed analytics for a single trade."""
+    trade = db.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
+    if not trade:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    metrics = compute_trade_metrics(dict(trade))
+    return metrics.to_dict()
+
+@app.delete("/trades/{trade_id}", response_model=Trade)
+def delete_trade(trade_id: int, db: sqlite3.Connection = Depends(get_db)) -> Trade:
     existing = db.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
     if not existing:
         raise HTTPException(status_code=404, detail="Trade not found")
