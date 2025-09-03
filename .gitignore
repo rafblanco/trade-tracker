@@ -1,2 +1,4 @@
 node_modules/
 trades.json
+__pycache__/
+*.pyc
