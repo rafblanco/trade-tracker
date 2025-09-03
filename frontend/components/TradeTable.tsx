@@ -1,6 +1,6 @@
 'use client';
 
-import { Trade } from '../lib/types';
+import { Trade } from '../types/trade';
 
 interface TradeTableProps {
   trades: Trade[];

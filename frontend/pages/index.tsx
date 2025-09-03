@@ -1,30 +1,41 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import TradeForm from '../components/TradeForm';
 import TradeTable from '../components/TradeTable';
-import { Trade } from '../lib/types';
+import { Trade, TradeInput } from '../types/trade';
 import { fetchTrades, createTrade, updateTrade, deleteTrade } from '../lib/api';
 
 export default function Home() {
-  const [trades, setTrades] = useState<Trade[]>([]);
   const [editing, setEditing] = useState<Trade | null>(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadTrades();
-  }, []);
+  const { data: trades = [] } = useQuery({
+    queryKey: ['trades'],
+    queryFn: fetchTrades,
+  });
 
-  async function loadTrades() {
-    const data = await fetchTrades();
-    setTrades(data);
-  }
+  const createMutation = useMutation({
+    mutationFn: createTrade,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trades'] }),
+  });
 
-  async function handleSave(trade: Trade) {
+  const updateMutation = useMutation({
+    mutationFn: updateTrade,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trades'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteTrade,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trades'] }),
+  });
+
+  async function handleSave(trade: TradeInput) {
     if (editing) {
-      await updateTrade({ ...trade, id: editing.id });
+      await updateMutation.mutateAsync({ ...trade, id: editing.id });
     } else {
-      await createTrade(trade);
+      await createMutation.mutateAsync(trade);
     }
     setEditing(null);
-    await loadTrades();
   }
 
   function handleEdit(trade: Trade) {
@@ -32,8 +43,7 @@ export default function Home() {
   }
 
   async function handleDelete(id: number) {
-    await deleteTrade(id);
-    await loadTrades();
+    await deleteMutation.mutateAsync(id);
   }
 
   function handleReset() {

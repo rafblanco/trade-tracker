@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState, FormEvent, ChangeEvent } from 'react';
-import { Trade } from '../lib/types';
+import { Trade, TradeInput } from '../types/trade';
 
 interface TradeFormProps {
   initialTrade?: Trade | null;
-  onSave: (trade: Trade) => Promise<void>;
+  onSave: (trade: TradeInput) => Promise<void>;
   onReset: () => void;
 }
 
-const emptyTrade: Trade = {
+const emptyTrade: TradeInput = {
   symbol: '',
   side: 'buy',
   qty: 0,
@@ -23,10 +23,15 @@ const emptyTrade: Trade = {
 };
 
 export default function TradeForm({ initialTrade, onSave, onReset }: TradeFormProps) {
-  const [trade, setTrade] = useState<Trade>(emptyTrade);
+  const [trade, setTrade] = useState<TradeInput>(emptyTrade);
 
   useEffect(() => {
-    setTrade(initialTrade || emptyTrade);
+    if (initialTrade) {
+      const { id, ...rest } = initialTrade;
+      setTrade(rest);
+    } else {
+      setTrade(emptyTrade);
+    }
   }, [initialTrade]);
 
   function handleChange(e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {

@@ -1,30 +1,28 @@
-import { Trade } from './types';
+import axios from 'axios';
+import { Trade, TradeInput } from '../types/trade';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
+export const apiClient = axios.create({
+  baseURL: API_BASE,
+  headers: { 'Content-Type': 'application/json' },
+});
+
 export async function fetchTrades(): Promise<Trade[]> {
-  const res = await fetch(`${API_BASE}/trades`);
-  if (!res.ok) throw new Error('Failed to load trades');
-  return res.json();
+  const { data } = await apiClient.get<Trade[]>('/trades');
+  return data;
 }
 
-export async function createTrade(trade: Trade): Promise<void> {
-  await fetch(`${API_BASE}/trades`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(trade),
-  });
+export async function createTrade(trade: TradeInput): Promise<Trade> {
+  const { data } = await apiClient.post<Trade>('/trades', trade);
+  return data;
 }
 
-export async function updateTrade(trade: Trade): Promise<void> {
-  if (!trade.id) throw new Error('Trade id required for update');
-  await fetch(`${API_BASE}/trades/${trade.id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(trade),
-  });
+export async function updateTrade(trade: Trade): Promise<Trade> {
+  const { data } = await apiClient.put<Trade>(`/trades/${trade.id}`, trade);
+  return data;
 }
 
 export async function deleteTrade(id: number): Promise<void> {
-  await fetch(`${API_BASE}/trades/${id}`, { method: 'DELETE' });
+  await apiClient.delete(`/trades/${id}`);
 }
