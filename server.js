@@ -6,20 +6,25 @@ const { URL } = require('url');
 const DATA_FILE = path.join(__dirname, 'trades.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
-function loadTrades() {
+async function loadTrades() {
   try {
-    const data = fs.readFileSync(DATA_FILE, 'utf8');
+    const data = await fs.promises.readFile(DATA_FILE, 'utf8');
     return JSON.parse(data);
   } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error('Error loading trades:', err);
+    }
     return [];
   }
 }
 
-function saveTrades(trades) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(trades, null, 2));
+async function saveTrades(trades) {
+  const tempFile = `${DATA_FILE}.tmp`;
+  await fs.promises.writeFile(tempFile, JSON.stringify(trades, null, 2));
+  await fs.promises.rename(tempFile, DATA_FILE);
 }
 
-let trades = loadTrades();
+let trades = [];
 
 function sendJson(res, statusCode, obj) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json' });
@@ -39,29 +44,39 @@ function parseBody(req, callback) {
   });
 }
 
-function handleApi(req, res) {
+async function handleApi(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (req.method === 'GET' && url.pathname === '/trades') {
     return sendJson(res, 200, trades);
   }
   if (req.method === 'POST' && url.pathname === '/trades') {
-    return parseBody(req, (err, trade) => {
+    return parseBody(req, async (err, trade) => {
       if (err) return sendJson(res, 400, { error: 'Invalid JSON' });
       trade.id = Date.now();
       trades.push(trade);
-      saveTrades(trades);
-      return sendJson(res, 201, trade);
+      try {
+        await saveTrades(trades);
+        return sendJson(res, 201, trade);
+      } catch (e) {
+        console.error('Error saving trades:', e);
+        return sendJson(res, 500, { error: 'Failed to save trade' });
+      }
     });
   }
   if (req.method === 'PUT' && url.pathname.startsWith('/trades/')) {
     const id = Number(url.pathname.split('/')[2]);
-    return parseBody(req, (err, updated) => {
+    return parseBody(req, async (err, updated) => {
       if (err) return sendJson(res, 400, { error: 'Invalid JSON' });
       const index = trades.findIndex(t => t.id === id);
       if (index === -1) return sendJson(res, 404, { error: 'Not found' });
       trades[index] = { ...trades[index], ...updated, id };
-      saveTrades(trades);
-      return sendJson(res, 200, trades[index]);
+      try {
+        await saveTrades(trades);
+        return sendJson(res, 200, trades[index]);
+      } catch (e) {
+        console.error('Error saving trades:', e);
+        return sendJson(res, 500, { error: 'Failed to save trade' });
+      }
     });
   }
   if (req.method === 'DELETE' && url.pathname.startsWith('/trades/')) {
@@ -69,8 +84,13 @@ function handleApi(req, res) {
     const index = trades.findIndex(t => t.id === id);
     if (index === -1) return sendJson(res, 404, { error: 'Not found' });
     const removed = trades.splice(index, 1)[0];
-    saveTrades(trades);
-    return sendJson(res, 200, removed);
+    try {
+      await saveTrades(trades);
+      return sendJson(res, 200, removed);
+    } catch (e) {
+      console.error('Error saving trades:', e);
+      return sendJson(res, 500, { error: 'Failed to save trade' });
+    }
   }
   sendJson(res, 404, { error: 'Not found' });
 }
@@ -90,13 +110,30 @@ function serveStatic(req, res) {
 
 const server = http.createServer((req, res) => {
   if (req.url.startsWith('/trades')) {
-    handleApi(req, res);
+    handleApi(req, res).catch(err => {
+      console.error('Unhandled API error:', err);
+      sendJson(res, 500, { error: 'Internal Server Error' });
+    });
   } else {
     serveStatic(req, res);
   }
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+
+async function initialize() {
+  try {
+    trades = await loadTrades();
+  } catch (err) {
+    console.error('Failed to load trades:', err);
+    trades = [];
+  }
+
+  server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+initialize().catch(err => {
+  console.error('Failed to start server:', err);
 });
