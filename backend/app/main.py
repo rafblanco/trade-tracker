@@ -5,6 +5,8 @@ import sqlite3
 from pathlib import Path
 import uvicorn
 
+from backend.analytics.metrics import compute_trade_metrics
+
 ROOT = Path(__file__).resolve().parents[2]
 DB_PATH = ROOT / "trades.db"
 SCHEMA_PATH = ROOT / "schema.sql"
@@ -115,6 +117,16 @@ def update_trade(trade_id: int, trade: TradeUpdate, db: sqlite3.Connection = Dep
     db.commit()
     updated = db.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
     return Trade(**dict(updated))
+
+
+@app.get("/trades/{trade_id}/analytics")
+def trade_analytics(trade_id: int, db: sqlite3.Connection = Depends(get_db)) -> dict:
+    """Return computed analytics for a single trade."""
+    trade = db.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
+    if not trade:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    metrics = compute_trade_metrics(dict(trade))
+    return metrics.to_dict()
 
 @app.delete("/trades/{trade_id}", response_model=Trade)
 def delete_trade(trade_id: int, db: sqlite3.Connection = Depends(get_db)) -> Trade:
