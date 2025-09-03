@@ -1,6 +1,6 @@
 # Trade Tracker
 
-Simple trade tracking service with a tiny Node.js backend and static dashboard.
+Simple trade tracking service with a FastAPI backend and static dashboard.
 
 ## Planned Tech Stack
 The project is evolving toward a modern stack that supports option strategy analytics and richer workflows:
@@ -38,9 +38,17 @@ The application uses a `trades` table with the following columns:
 - `DELETE /trades/:id` – remove a trade
 
 ## Development
+### Backend (FastAPI)
+Install dependencies and start the API server:
 ```
-npm install  # no external dependencies
-npm start    # start server at http://localhost:3000
+pip install fastapi uvicorn
+uvicorn backend.app.main:app --reload
+```
+
+### Frontend
+```
+npm install
+npm start
 ```
 
 Run tests:
