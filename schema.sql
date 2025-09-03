@@ -10,5 +10,7 @@ CREATE TABLE IF NOT EXISTS trades (
   exit_time TEXT,
   fees REAL,
   tags TEXT,
-  notes TEXT
+  notes TEXT,
+  legs TEXT,
+  attachment_url TEXT
 );

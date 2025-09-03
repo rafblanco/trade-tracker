@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from '@clerk/nextjs';
 import TradeForm from '../components/TradeForm';
 import TradeTable from '../components/TradeTable';
+import StrategyMetrics from '../components/StrategyMetrics';
 import { Trade } from '../lib/types';
 import { fetchTrades, createTrade, updateTrade, deleteTrade } from '../lib/api';
 
@@ -50,6 +51,12 @@ export default function Home() {
 
   return (
     <>
+      <h1>Trade Tracker</h1>
+      <TradeForm initialTrade={editing} onSave={handleSave} onReset={handleReset} />
+      <h2>Trades</h2>
+      <TradeTable trades={trades} onEdit={handleEdit} onDelete={handleDelete} />
+      <h2>Strategy Metrics</h2>
+      <StrategyMetrics />
       <SignedIn>
         <div>
           <h1>Trade Tracker</h1>

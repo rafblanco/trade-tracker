@@ -58,3 +58,23 @@ def test_trade_analytics_endpoint():
     data = analytics.json()
     assert np.isclose(data["pnl"], 98.0)
     assert np.isclose(data["return_pct"], 0.098)
+
+
+def test_analytics_summary_endpoint():
+    client = TestClient(app)
+    base = {
+        "side": "buy",
+        "qty": 1,
+        "entry_price": 100,
+        "entry_time": "2024-01-01T00:00:00Z",
+        "exit_price": 105,
+        "exit_time": "2024-01-02T00:00:00Z",
+        "fees": 0,
+    }
+    client.post("/trades", json={"symbol": "AAA", **base, "tags": "strat"})
+    client.post("/trades", json={"symbol": "BBB", **base, "tags": "strat"})
+
+    summary = client.get("/analytics/summary")
+    assert summary.status_code == 200
+    data = summary.json()
+    assert data["strat"]["trades"] == 2
