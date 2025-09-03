@@ -1,4 +1,4 @@
-import { Trade } from './types';
+import { Trade, StrategyMetrics } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
@@ -27,4 +27,10 @@ export async function updateTrade(trade: Trade): Promise<void> {
 
 export async function deleteTrade(id: number): Promise<void> {
   await fetch(`${API_BASE}/trades/${id}`, { method: 'DELETE' });
+}
+
+export async function fetchStrategyMetrics(): Promise<StrategyMetrics> {
+  const res = await fetch(`${API_BASE}/analytics/summary`);
+  if (!res.ok) throw new Error('Failed to load metrics');
+  return res.json();
 }

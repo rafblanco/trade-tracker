@@ -1,5 +1,13 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
+
+
+class Leg(BaseModel):
+    symbol: str
+    side: str
+    qty: float
+    price: float
+
 
 class Trade(BaseModel):
     id: int
@@ -13,3 +21,5 @@ class Trade(BaseModel):
     fees: Optional[float] = None
     tags: Optional[str] = None
     notes: Optional[str] = None
+    legs: Optional[List[Leg]] = None
+    attachment_url: Optional[str] = None
