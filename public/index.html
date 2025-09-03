@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Trade Tracker</title>
+  <style>
+    table, th, td { border: 1px solid black; border-collapse: collapse; }
+    th, td { padding: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Trade Tracker</h1>
+  <form id="trade-form">
+    <input type="hidden" id="trade-id">
+    <div>
+      <label>Symbol: <input id="symbol" required></label>
+    </div>
+    <div>
+      <label>Side: <select id="side"><option value="buy">Buy</option><option value="sell">Sell</option></select></label>
+    </div>
+    <div>
+      <label>Quantity: <input id="qty" type="number" step="any" required></label>
+    </div>
+    <div>
+      <label>Entry Price: <input id="entry_price" type="number" step="any" required></label>
+    </div>
+    <div>
+      <label>Entry Time: <input id="entry_time" type="datetime-local" required></label>
+    </div>
+    <div>
+      <label>Exit Price: <input id="exit_price" type="number" step="any"></label>
+    </div>
+    <div>
+      <label>Exit Time: <input id="exit_time" type="datetime-local"></label>
+    </div>
+    <div>
+      <label>Fees: <input id="fees" type="number" step="any"></label>
+    </div>
+    <div>
+      <label>Tags: <input id="tags" placeholder="tag1, tag2"></label>
+    </div>
+    <div>
+      <label>Notes:<br><textarea id="notes"></textarea></label>
+    </div>
+    <button type="submit">Save</button>
+    <button type="button" id="reset-btn">Reset</button>
+  </form>
+
+  <h2>Trades</h2>
+  <table id="trades-table">
+    <thead>
+      <tr>
+        <th>Symbol</th><th>Side</th><th>Qty</th><th>Entry Price</th><th>Entry Time</th>
+        <th>Exit Price</th><th>Exit Time</th><th>Fees</th><th>Tags</th><th>Notes</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="main.js"></script>
+</body>
+</html>
