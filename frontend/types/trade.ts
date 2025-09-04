@@ -1,4 +1,11 @@
-export type Side = 'buy' | 'sell';
+export type Side = "buy" | "sell";
+
+export interface Leg {
+  symbol: string;
+  side: "buy" | "sell";
+  qty: number;
+  price: number;
+}
 
 export interface Trade {
   id: number;
@@ -12,6 +19,16 @@ export interface Trade {
   fees?: number | null;
   tags?: string | null;
   notes?: string | null;
+  legs?: Leg[];
+  attachment_url?: string | null;
 }
 
-export type TradeInput = Omit<Trade, 'id'>;
+export interface StrategyMetrics {
+  [tag: string]: {
+    pnl: number;
+    return_pct: number;
+    trades: number;
+  };
+}
+
+export type TradeInput = Omit<Trade, "id">;
